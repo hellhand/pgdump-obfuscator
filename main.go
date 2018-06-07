@@ -78,7 +78,7 @@ var bytesCopyBegin = []byte("COPY ")
 var bytesCopyEnd = []byte("\\.\n")
 var bytesNewline = []byte("\n")
 
-const copySyntaxDelimiters = " \n'\"(),;"
+const copySyntaxDelimiters = " \n'(),;"
 
 func process(config *Configuration, input *bufio.Reader, output io.Writer) error {
 	target := Target{}

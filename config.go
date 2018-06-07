@@ -8,16 +8,16 @@ type Configuration struct {
 var Config *Configuration = &Configuration{
 	Obfuscations: []TargetedObfuscation{
 		TargetedObfuscation{
-			Target{Table: "auth_user", Column: "email"},
+			Target{Table: "public.\"user\"", Column: "email_address"},
 			ScrambleEmail,
 		},
 		TargetedObfuscation{
-			Target{Table: "auth_user", Column: "password"},
+			Target{Table: "public.\"user\"", Column: "first_name"},
 			ScrambleBytes,
 		},
 		TargetedObfuscation{
-			Target{Table: "accounts_profile", Column: "phone"},
-			ScrambleDigits,
+			Target{Table: "public.\"user\"", Column: "last_name"},
+			ScrambleBytes,
 		},
 	},
 }

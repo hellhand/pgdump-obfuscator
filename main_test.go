@@ -10,7 +10,7 @@ import (
 var testConfig01 = &Configuration{
 	Obfuscations: []TargetedObfuscation{
 		TargetedObfuscation{
-			Target{Table: "auth_user", Column: "email"},
+			Target{Table: "public.\"auth_user\"", Column: "email"},
 			ScrambleEmail,
 		},
 		TargetedObfuscation{
@@ -34,7 +34,7 @@ SELECT pg_catalog.setval('auth_user_id_seq', 123111, true);
 -- Data for Name: auth_user; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY auth_user (id, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login, date_joined) FROM stdin;
+COPY public."auth_user" (id, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login, date_joined) FROM stdin;
 123123111	499964777.sdsad	testname	testname	\N	!	f	t	f	2011-02-07 12:08:30+00	2010-11-22 19:27:12.31832+00
 333114441	testT1@bing.com			testT1@bing.com	!	f	t	f	2011-06-08 12:57:36+00	2011-06-08 12:50:25.206298+00
 515131311	whoisthere			noreply781134796251@bing.com	pbkdf2_sha256$10000$qweqweqweqwe$cThxOHE4	f	t	f	2012-11-16 18:27:43.673889+00	2012-11-16 18:27:43.229281+00

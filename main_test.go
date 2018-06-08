@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+        "fmt"
 )
 
 var testConfig01 = &Configuration{
@@ -14,13 +15,17 @@ var testConfig01 = &Configuration{
 			ScrambleEmail,
 		},
 		TargetedObfuscation{
-			Target{Table: "auth_user", Column: "password"},
+			Target{Table: "public.\"auth_user\"", Column: "password"},
 			GenScrambleBytes(7),
 		},
 		TargetedObfuscation{
 			Target{Table: "accounts_profile", Column: "phone"},
 			ScrambleDigits,
 		},
+                TargetedObfuscation{
+                        Target{Table: "json", Column: "json"},
+                        ScrambleJson,
+                },
 	},
 }
 
@@ -45,6 +50,10 @@ COPY accounts_profile (id, user_id, opted_in, next_break, status, phone, last_vi
 1223	1321	f	\N	0	666666666	2011-09-28 09:37:20.83051+00	\N	f	\N	\N	\N
 4423	55512	f	\N	0		\N	\N	f	\N	\N	\N
 \.
+
+COPY json (json) FROM stdin;
+{"array": [1,2,3],"boolean": true,"null": null,"number": 123,"object": {"a": "b","c": "d","e": "f"},"string": "Hello World"}
+\.
 `
 
 func assertScramble(t *testing.T, scramble func([]byte) []byte, s, expected string) {
@@ -62,17 +71,22 @@ func TestProcess01(t *testing.T) {
 	output := new(bytes.Buffer)
 	process(testConfig01, input, output)
 	outString := output.String()
+        fmt.Printf("Data : ", outString)
 	if outString == testInput01 {
 		t.Fatal("Outputs are equal")
 	}
-	if !strings.Contains(outString, "COPY auth_user (id, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login, date_joined) FROM stdin;") ||
-		!strings.Contains(outString, "COPY accounts_profile (id, user_id, opted_in, next_break, status, phone, last_visited, come_from, cs_letter, city_id, budget_range_id, prefs_opt) FROM stdin;") {
+	if !strings.Contains(outString, "COPY public.\"auth_user\" (id, username, first_name, last_name, email, password, is_staff, is_active, is_superuser, last_login, date_joined) FROM stdin;") ||
+		!strings.Contains(outString, "COPY accounts_profile (id, user_id, opted_in, next_break, status, phone, last_visited, come_from, cs_letter, city_id, budget_range_id, prefs_opt) FROM stdin;") ||
+                !strings.Contains(outString, "COPY json (json) FROM") {
 		t.Fatal("Changed SQL")
 	}
 	if strings.Contains(outString, "pbkdf2_sha256$10000$qweqweqweqwe$cThxOHE4") ||
 		strings.Contains(outString, "+3801445223001") {
 		t.Fatal("Did not scramble sensitive data")
 	}
+        if strings.Contains(outString, "\"array\": [1,2,3]") {
+                t.Fatal("Did not scramble Json")
+        }
 	if !strings.Contains(outString, "515131311	whoisthere") ||
 		!strings.Contains(outString, `	2011-07-04 12:28:33.895325+00	\N	f	\N	\N	\N`) ||
 		!strings.Contains(outString, `1223	1321	f	\N	0	`) {

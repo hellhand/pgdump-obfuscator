@@ -7,6 +7,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"net"
+        "encoding/json"
+        "fmt"
 )
 
 var Salt []byte
@@ -26,7 +28,8 @@ var bytesOutputAlphabet = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ
 
 // Modifies `s` in-place.
 func ScrambleBytes(s []byte) []byte {
-	isArray := len(s) >= 2 && s[0] == '{' && s[len(s)-1] == '}'
+        fmt.Printf("Scramble bytes %v\n", string(s))
+        isArray := len(s) >= 2 && s[0] == '{' && s[len(s)-1] == '}'
 
 	hash := sha256.New()
 	// Hard-coding this constant wins less than 3% in BenchmarkScrambleBytes
@@ -36,7 +39,7 @@ func ScrambleBytes(s []byte) []byte {
 	sumBytes := hash.Sum(nil)
 
 	reader := bytes.NewReader(s)
-	var r rune
+        var r rune
 	var err error
 	for i := 0; ; i++ {
 		r, _, err = reader.ReadRune()
@@ -56,6 +59,7 @@ func ScrambleBytes(s []byte) []byte {
 }
 
 func ScrambleDigits(s []byte) []byte {
+        fmt.Printf("Scramble Digits %v\n", s)
 	hash := sha256.New()
 	const sumLength = 32 // SHA256/8
 	hash.Write(Salt)
@@ -87,6 +91,7 @@ func scrambleOneEmail(s []byte) []byte {
 
 // Supports array of emails in format {email1,email2}
 func ScrambleEmail(s []byte) []byte {
+        fmt.Printf("Scramble email %v\n", string(s))
 	if len(s) < 2 {
 		// panic("ScrambleEmail: input is too small: '" + string(s) + "'")
 		return s
@@ -124,6 +129,35 @@ func ScrambleInet(s []byte) []byte {
 		ip = net.IP(sumBytes[:4])
 	}
 	return []byte(ip.String())
+}
+
+func ScrambleJson(s []byte) []byte {
+        var m map[string]interface{}
+        err := json.Unmarshal(s, &m)
+        if err != nil {
+                panic(err)
+        }
+
+        r := scrambleJsonObject(m)
+        payload, _ := json.Marshal(r)
+        return payload
+}
+
+func scrambleJsonObject(m map[string]interface{}) map[string]interface{} {
+    for k, v := range m {
+        fmt.Printf("PRE : %v - Value %v of %T\n", k , v, v)
+        if mv, ok := v.(map[string]interface{}); ok {
+            m[k] = scrambleJsonObject(mv)
+            fmt.Printf("POST - Key : %v - Value %v\n", string(k))
+        } else {
+            if ov, ok := v.(string); ok {
+                m[k] = ScrambleBytes([]byte(ov))
+                fmt.Printf("POST - Key : %v - Value %v\n", string(k))
+            }
+        }
+    }
+    fmt.Printf("Map : %v\n", m)
+    return m
 }
 
 func init() {

@@ -19,5 +19,13 @@ var Config *Configuration = &Configuration{
 			Target{Table: "public.\"user\"", Column: "last_name"},
 			ScrambleBytes,
 		},
+                TargetedObfuscation{
+                        Target{Table: "public.message", Column: "body"},
+                        ScrambleBytes,
+                },
+                TargetedObfuscation{
+                        Target{Table: "public.message", Column: "subject"},
+                        ScrambleBytes,
+                },
 	},
 }
